@@ -1,5 +1,6 @@
 
 -- Create the orders table
+drop table orders;
 CREATE TABLE orders (
     Order_id VARCHAR(20),
     Customer_code VARCHAR(20),
@@ -86,3 +87,12 @@ INSERT INTO orders VALUES ('OF1900191872','UVW7890123456JKL','2025-02-25 19:15:0
 INSERT INTO orders VALUES ('OF1900191873','UVW7890123456JKL','2025-03-25 19:15:00','PIZZA123','Italian','Delivered','TASTY50');
 
 select * from orders;
+
+--1) Top 1 outlets by cuisine type without using limit and top fn
+with cte as
+(select Restaurant_id, cuisine, count(1) as no_of_orders
+from orders group by Restaurant_id, cuisine)
+select * from 
+(select *, row_number() over(partition by cuisine order by no_of_orders desc) as rnk
+from cte) t 
+where rnk =1
