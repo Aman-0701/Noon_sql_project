@@ -96,3 +96,16 @@ select * from
 (select *, row_number() over(partition by cuisine order by no_of_orders desc) as rnk
 from cte) t 
 where rnk =1
+
+-- 2) Find daily new customer count(everyday how many new customer are we acquiring)
+with cte as
+(select customer_code,min(cast(placed_at as date)) as first_order_date from orders
+group by customer_code)
+select first_order_date, count(1) as no_of_new_customers from cte group by first_order_date;
+
+-- 3) Count of all users who were acquired in Jan 2025 and only placed one order in Jan and didnot place any other order 
+
+select customer_code, count(1) as no_of_orders from orders where MONTH(placed_at) = 1 and year(placed_at) =2025
+and customer_code not in (select Customer_code from orders where not(MONTH(placed_at) = 1 and year(placed_at) =2025))
+group by Customer_code
+having count(1) = 1
