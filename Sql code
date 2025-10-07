@@ -119,3 +119,29 @@ from cte
 inner join orders o on cte.Customer_code = o.Customer_code and cte.first_order_date = o.Placed_at
 where cte.latest_order_date<dateadd(DAY,-7,getdate())
 and cte.first_order_date<dateadd(MONTH,-1,GETDATE()) and o.Promo_code_Name is not null;
+
+-- 5) Growth team is planning to create a trigger that will target customers after their every third order
+-- with a personalized communication and they have asked you to create a query for this;
+with cte as 
+(select *, row_number() over(partition by customer_code order by placed_at) as order_no from orders)
+select distinct customer_code from cte where order_no%3=0
+;
+
+-- 6) List all the customers who placed more than one order and all their orders on a promo only
+
+select Customer_code, count(1) as no_of_orders, count(Promo_code_Name) as promo_orders from orders
+group by Customer_code
+having count(1)>1 and count(1) = count(Promo_code_Name)
+;
+
+-- 7) What percent of customers were organically acquired in jan 2025 (placed their first order without promo code)
+with cte as
+(select Customer_code, min(Placed_at) as first_login_date from orders
+group by customer_code
+having month(min(Placed_at)) = 1 and YEAR(min(Placed_at)) = 2025),
+cte2 as
+(select cte.*,o.Promo_code_Name from cte
+inner join orders o on cte.Customer_code = o.Customer_code and cte.first_login_date = o.Placed_at)
+
+select count(case when promo_code_name is null then 1 end)*100.0/count(Customer_code) from cte2
+;
